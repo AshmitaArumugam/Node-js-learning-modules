@@ -1,0 +1,70 @@
+# Node.js Streams Practice — File Copy using ReadStream & WriteStream
+
+This file demonstrates how to copy a large file efficiently using
+Node.js Streams, instead of loading the entire file into memory at once.
+
+## What this code does
+
+1. **Setup**
+   - Creates a `docs` folder if it doesn't exist
+   - Creates a sample `HugeFile.txt` (1000 lines) for testing, if not already present
+
+2. **ReadStream**
+   - Opens `HugeFile.txt` in stream mode using `fs.createReadStream()`
+   - Reads the file in small chunks (default 64KB per chunk) instead of
+     loading the whole file into memory
+
+3. **WriteStream**
+   - Opens `CopyFile.txt` in stream mode using `fs.createWriteStream()`
+   - Writes each chunk received from the ReadStream into this file
+
+4. **Combining Read + Write**
+   - Every time a `'data'` chunk is received from ReadStream,
+     it is immediately written to WriteStream using `.write(chunk)`
+   - Once ReadStream finishes (`'end'` event), `writeStream.end()` is
+     called to properly close the write stream
+
+## Key Events Used
+
+| Event      | Stream       | When it fires                                  |
+|------------|--------------|-------------------------------------------------|
+| `'open'`   | ReadStream   | When the file is successfully opened            |
+| `'data'`   | ReadStream   | Every time a new chunk is read                  |
+| `'end'`    | ReadStream   | After the entire file has been read             |
+| `'error'`  | Both         | If any error occurs (missing file, permissions) |
+| `'finish'` | WriteStream  | After all data has been written successfully    |
+
+## Why Streams instead of `readFile`/`writeFile`?
+
+- `fs.readFile()` loads the **entire file into memory (RAM)** before
+  processing — not efficient for large files (videos, logs, big datasets)
+- `fs.createReadStream()` / `fs.createWriteStream()` process data in
+  **small chunks**, keeping memory usage low and performance high
+
+## Proof that Streams are Async
+
+The last line of the script logs a message immediately, **before** any
+stream events fire. Run the file and check the console output order —
+this confirms streams work in the background without blocking the
+main thread.
+
+## How to Run
+
+```bash
+node streamPractice.js
+```
+
+After running, check the `docs` folder:
+- `HugeFile.txt` — the original sample file
+- `CopyFile.txt` — the copied file (created via streams)
+
+## Possible Improvements
+
+- Use `.pipe()` instead of manually handling `'data'` events:
+  ```javascript
+  readStream.pipe(writeStream);
+  ```
+  This does the same job in one line — recommended shortcut once you're
+  comfortable with the manual event-based approach above.
+- Add file size logging using `fs.statSync()` to compare source vs copy
+- Convert to `async/await` style using `fs.promises` for cleaner code
