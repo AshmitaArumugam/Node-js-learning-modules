@@ -1,0 +1,89 @@
+# Node.js — Basic HTTP Server (using `http` module)
+
+This file demonstrates how to create a raw HTTP server in Node.js
+using the built-in `http` module — no Express, no frameworks, just
+core Node.js.
+
+## What this code does
+
+1. **Import the `http` module**
+   - Built into Node.js, no need to install anything
+
+2. **Create the server**
+   ```javascript
+   const server = http.createServer((req, res) => {
+       console.log("Request Made");
+   });
+   ```
+   - `http.createServer()` creates a server object
+   - The callback function `(req, res) => {...}` runs **every single time**
+     a request comes in (browser hit, API call, refresh, etc.)
+   - `req` = the incoming request (data sent by client)
+   - `res` = the response (what we send back to client)
+
+3. **Start listening for requests**
+   ```javascript
+   server.listen(3000, 'localhost', () => {
+       console.log("Server is Listening");
+   });
+   ```
+   - `3000` = port number the server runs on
+   - `'localhost'` = hostname (accessible only on your machine)
+   - The third argument (callback) runs **only once** — when the server
+     successfully starts
+
+## Key Concept — Two Different Callbacks
+
+| Callback | Runs when | How many times |
+|---|---|---|
+| `createServer((req, res) => {...})` | Every time a request is made | Multiple times (once per request) |
+| `listen(3000, 'localhost', () => {...})` | Server starts successfully | Only once |
+
+This is why in the terminal output, `"Server is Listening"` prints
+**once**, but `"Request Made"` prints **once per browser
+request/refresh**.
+
+## How to Run
+
+```bash
+node server.js
+```
+
+Then open your browser and go to:
+```
+http://localhost:3000
+```
+
+Every time you visit or refresh that page, `"Request Made"` will print
+in the terminal — because a new request hits the server each time.
+
+## Common Beginner Mistake (seen in testing)
+
+If you run `node server` again while the previous server is **still
+running** in another terminal, you'll get a `port already in use`
+error — because port 3000 is already occupied by the first running
+instance. Stop the first one (`Ctrl + C`) before starting a new one.
+
+## Note on `req` and `res`
+
+Right now, the code doesn't use `req` or `res` to send anything back
+to the browser — the browser will just keep loading (spinning) since
+no response is sent. To fix this, you need to explicitly end the
+response:
+
+```javascript
+const server = http.createServer((req, res) => {
+    console.log("Request Made");
+    res.end("Hello from the server!");
+});
+```
+
+## Possible Improvements
+
+- Send an actual response using `res.end()` or `res.write()`
+- Set proper headers using `res.writeHead(200, { 'Content-Type': 'text/plain' })`
+- Handle different routes (`req.url`) to respond differently for
+  different paths (e.g., `/`, `/about`)
+- Eventually move to **Express.js** for easier routing and middleware
+  support (this raw `http` approach is great for understanding
+  fundamentals first)
