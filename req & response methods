@@ -1,0 +1,82 @@
+# Node.js HTTP — req.url, req.method, res.end(), and Redirection
+
+This project demonstrates core `http` module concepts in Node.js:
+handling different routes with `req.url`, handling different request
+types with `req.method`, ending responses with `res.end()`, and
+performing redirection using status codes + headers.
+
+See `node_http_concepts.pdf` in this folder for detailed explanations
+of each concept with code examples and summary tables.
+
+## What `server.js` covers
+
+### 1. `req.url`
+Gives the path portion of the requested URL (e.g. `/`, `/about`,
+`/users`). Used to decide which route logic should run.
+
+### 2. `req.method`
+Gives the HTTP method used (GET, POST, PUT, DELETE, etc). Combined
+with `req.url`, the same path can behave differently based on the
+method — this is the foundation of REST APIs.
+
+### 3. `res.end()`
+Ends the response and optionally sends final data. Every response
+**must** call `res.end()` at some point, or the client will keep
+waiting/loading forever.
+
+### 4. Redirection
+Achieved using a 3xx status code (like `301`) along with a `Location`
+header. The browser sees this and automatically re-requests the new
+URL.
+
+## Routes in this server
+
+| Route | Method | Behavior |
+|---|---|---|
+| `/` | GET | Returns "Welcome to the Home Page" |
+| `/old-page` | any | Redirects (301) to `/new-page` |
+| `/new-page` | GET | Returns "You have reached the New Page!" |
+| `/users` | GET | Returns "Fetching all users" |
+| `/users` | POST | Returns "New user created" |
+| anything else | any | Returns 404 "Page Not Found" |
+
+## How to Run
+
+```bash
+node server.js
+```
+
+Then test these in your browser or with a tool like Postman:
+
+- `http://localhost:3000/` → Home page
+- `http://localhost:3000/old-page` → Watch it redirect to `/new-page`
+  (check the address bar — it changes automatically)
+- `http://localhost:3000/users` → GET returns one message
+- POST to `http://localhost:3000/users` (via Postman/curl) → returns
+  a different message, same URL
+
+Testing POST from a browser directly isn't possible (browsers only
+do GET when you type a URL), so use Postman or curl:
+
+```bash
+curl -X POST http://localhost:3000/users
+```
+
+## Key Takeaways
+
+- `req.url` + `req.method` together decide how a server responds —
+  this pattern is exactly what routing frameworks like Express
+  automate for you.
+- `res.end()` is mandatory to close every response.
+- Redirection is just a status code (301/302) + a `Location` header —
+  nothing magical, the browser does the actual re-requesting.
+
+## Possible Improvements
+
+- Move to Express.js: `app.get()`, `app.post()`, and
+  `res.redirect('/new-page')` replace all the manual `if/else` checks
+  here with much shorter code.
+- Add query string parsing using `req.url` with the `url` module
+  (`new URL(req.url, 'http://localhost:3000')`) to handle URLs like
+  `/search?q=node`.
+- Add proper error handling for unsupported methods per route.
