@@ -1,0 +1,235 @@
+# Express.js — Basics, Syntax & Commands
+
+Express is a framework built **on top of Node.js** that makes building
+servers and APIs much easier — no more manual `if/else` on `req.url`
+and `req.method` like in raw `http` module code.
+
+## Installation
+
+```bash
+npm init -y
+npm install express
+```
+
+## Basic Server Setup
+
+```javascript
+const express = require('express');
+const app = express();
+
+app.listen(3000, () => {
+    console.log('Server running on port 3000');
+});
+```
+
+## Routing — GET, POST, PUT, DELETE
+
+| Method | Purpose |
+|---|---|
+| `app.get(path, callback)` | Fetch / read data |
+| `app.post(path, callback)` | Create new data |
+| `app.put(path, callback)` | Update data completely |
+| `app.patch(path, callback)` | Update data partially |
+| `app.delete(path, callback)` | Delete data |
+
+```javascript
+app.get('/', (req, res) => {
+    res.send('Welcome to Home Page');
+});
+
+app.post('/users', (req, res) => {
+    res.send('New user created');
+});
+
+app.put('/users/:id', (req, res) => {
+    res.send('User updated');
+});
+
+app.delete('/users/:id', (req, res) => {
+    res.send('User deleted');
+});
+```
+
+## Sending Responses
+
+### `res.send()`
+Sends a response — works with strings, objects, or arrays.
+```javascript
+app.get('/', (req, res) => {
+    res.send('Hello World');           // string
+});
+
+app.get('/user', (req, res) => {
+    res.send({ name: 'Ashmita', age: 21 }); // object -> auto converts to JSON
+});
+```
+
+### `res.json()`
+Explicitly sends a JSON response (recommended for APIs).
+```javascript
+app.get('/data', (req, res) => {
+    res.json({ message: 'Success', status: 200 });
+});
+```
+
+### `res.status()`
+Sets the HTTP status code — usually chained with `.send()` or `.json()`.
+```javascript
+app.get('/error', (req, res) => {
+    res.status(404).send('Not Found');
+});
+
+app.post('/create', (req, res) => {
+    res.status(201).json({ message: 'Created successfully' });
+});
+```
+
+### `res.redirect()`
+Redirects the client to a different route.
+```javascript
+app.get('/old-page', (req, res) => {
+    res.redirect('/new-page');
+});
+
+app.get('/new-page', (req, res) => {
+    res.send('You reached the new page!');
+});
+```
+
+## Reading Data from Requests
+
+### `req.params` — Route parameters (dynamic segments in URL)
+```javascript
+app.get('/users/:id', (req, res) => {
+    res.send(`User ID is ${req.params.id}`);
+});
+```
+Test: `http://localhost:3000/users/5` → `User ID is 5`
+
+### `req.query` — Query string parameters
+```javascript
+app.get('/search', (req, res) => {
+    res.send(`Searching for: ${req.query.q}`);
+});
+```
+Test: `http://localhost:3000/search?q=node&category=books`
+→ `req.query` = `{ q: 'node', category: 'books' }`
+
+### `req.body` — Data sent in POST/PUT requests
+Requires the `express.json()` middleware to parse it first:
+```javascript
+app.use(express.json());
+
+app.post('/users', (req, res) => {
+    console.log(req.body); // { name: 'Ashmita', age: 21 }
+    res.send('User data received');
+});
+```
+
+## Middleware — `app.use()`
+
+Middleware runs for every request before it reaches the route handler.
+Useful for logging, authentication, parsing data, etc.
+
+```javascript
+app.use((req, res, next) => {
+    console.log(`${req.method} request to ${req.url}`);
+    next(); // must call next() to move to the next middleware/route
+});
+```
+
+## Serving Static Files (HTML, CSS, JS, images)
+
+```javascript
+app.use(express.static('public'));
+```
+Any file inside the `public` folder becomes directly accessible, e.g.
+`http://localhost:3000/index.html`, `http://localhost:3000/style.css`
+— no need for manual `fs.readFile()`.
+
+## Full Example — Everything Combined
+
+```javascript
+const express = require('express');
+const app = express();
+
+app.use(express.json());            // parse JSON request bodies
+app.use(express.static('public'));  // serve static files
+
+app.get('/', (req, res) => {
+    res.send('Home Page');
+});
+
+app.get('/users/:id', (req, res) => {
+    res.send(`User ID: ${req.params.id}`);
+});
+
+app.get('/search', (req, res) => {
+    res.send(`Query: ${req.query.q}`);
+});
+
+app.post('/users', (req, res) => {
+    console.log(req.body);
+    res.status(201).json({ message: 'User created', data: req.body });
+});
+
+app.get('/old-page', (req, res) => {
+    res.redirect('/new-page');
+});
+
+app.get('/new-page', (req, res) => {
+    res.send('New Page Content');
+});
+
+app.listen(3000, () => {
+    console.log('Server running on http://localhost:3000');
+});
+```
+
+## Quick Reference Table
+
+| Method / Property | Purpose |
+|---|---|
+| `app.get(path, callback)` | Handle GET requests |
+| `app.post(path, callback)` | Handle POST requests |
+| `app.put(path, callback)` | Handle PUT requests |
+| `app.delete(path, callback)` | Handle DELETE requests |
+| `res.send(data)` | Send response (string/object/array) |
+| `res.json(data)` | Send explicit JSON response |
+| `res.status(code)` | Set HTTP status code |
+| `req.params` | Dynamic route values (`:id`) |
+| `req.query` | URL query string values (`?key=value`) |
+| `req.body` | POST/PUT request body data |
+| `res.redirect(url)` | Redirect to another route |
+| `app.use(middleware)` | Register middleware |
+| `express.static('folder')` | Serve static files from a folder |
+| `express.json()` | Middleware to parse JSON bodies |
+
+## How to Run
+
+```bash
+node server.js
+```
+or with auto-restart (recommended during development):
+```bash
+nodemon server.js
+```
+
+## Raw Node.js vs Express — Quick Comparison
+
+| | Raw Node.js (`http` module) | Express.js |
+|---|---|---|
+| Routing | Manual `if/else` on `req.url`, `req.method` | `app.get()`, `app.post()`, etc. |
+| Redirection | `res.writeHead(301, {Location: ...})` | `res.redirect(url)` — one line |
+| Static files | Manual `fs.readFile()` per route | `express.static('folder')` |
+| Body parsing | Manual stream/buffer handling | `express.json()` middleware |
+| Code length | More boilerplate | Concise and readable |
+
+## Next Steps
+
+- Practice rewriting the raw Node.js `http` server code into Express
+  to see the difference directly
+- Explore Express Router (`express.Router()`) for organizing routes
+  into separate files as the project grows
+- Learn common middleware: `cors`, `morgan` (logging), `dotenv`
+  (environment variables) — all commonly used in real backend projects
